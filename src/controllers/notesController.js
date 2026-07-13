@@ -3,8 +3,32 @@ import createHttpError from 'http-errors';
 
 export const getAllNotes = async (req, res, next) => {
   try {
-    const notes = await Note.find();
-    res.status(200).json(notes);
+    const { page = 1, perPage = 10, tag, search } = req.query;
+
+    const skip = (page - 1) * perPage;
+    
+    const query = {};
+    if (tag) {
+      query.tag = tag;
+    }
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const notes = await Note.find(query).skip(skip).limit(perPage);
+    const totalNotes = await Note.countDocuments(query);
+    const totalPages = Math.ceil(totalNotes / perPage) || 1;
+
+    res.status(200).json({
+      page: Number(page),
+      perPage: Number(perPage),
+      totalNotes,
+      totalPages,
+      notes,
+    });
   } catch (error) {
     next(error);
   }
