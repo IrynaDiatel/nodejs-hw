@@ -10,7 +10,7 @@ export const registerUser = async (req, res, next) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw createHttpError(409, 'Email in use');
+      throw createHttpError(400, 'Email in use');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,7 +31,7 @@ export const loginUser = async (req, res, next) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      throw createHttpError(404, 'User not found');
+      throw createHttpError(401, 'User not found');
     }
 
     const isPasswordEqual = await bcrypt.compare(password, user.password);
@@ -60,6 +60,10 @@ export const refreshUserSession = async (req, res, next) => {
     }
 
     if (new Date() > session.refreshTokenValidUntil) {
+      await Session.deleteOne({ _id: sessionId });
+      res.clearCookie('sessionId');
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
       throw createHttpError(401, 'Session token expired');
     }
 
