@@ -20,8 +20,8 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(logger);
 
-app.use('/auth', authRoutes);
-app.use('/users', userRoutes);
+app.use(authRoutes);
+app.use(userRoutes);
 app.use(notesRoutes);
 
 app.use(notFoundHandler);
